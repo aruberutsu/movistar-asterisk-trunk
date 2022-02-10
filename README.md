@@ -1,7 +1,5 @@
-asterisk-movistar
------------------
-
-Configuración de Asterisk con driver PJSIP para usarlo con un trunk de Movistar FTTH.
+Configuración de Asterisk con trunk SIP Movistar FTTH
+-----------------------------------------------------
 
 # Uso
 
