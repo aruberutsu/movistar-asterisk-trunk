@@ -1,0 +1,63 @@
+; Un dialplan de ejemplo un poco más complejo. 
+; Una configuración mínima para tenerlo funcional, sería junto al contenido del otro fichero extensions.conf:
+
+[default]
+
+; Extensiones locales
+exten => 201,1,Dial(PJSIP/201,30,r)
+exten => 202,1,Dial(PJSIP/202,30,r)
+exten => 203,1,Dial(PJSIP/203,30,r)
+
+; BLF (speed dial) para extensiones locales
+exten = 201,hint,PJSIP/201
+exten = 202,hint,PJSIP/202
+exten = 203,hint,PJSIP/203
+
+exten => 200,1,Goto(not-so-fast,s,1) ; Simular ruta entrante
+exten => 222,1,VoiceMailMain() ; Consultar el contestador (opcional, necesita configuración adicional)
+
+
+;;; ; Una muestra a modo de ejemplo de lo que podríamos llegar a hacer:
+;;; ; En timofonica-in, en vez de ir a inbound-route, tendría:
+;;; ; same => 17,Goto(not-so-fast,s,1)
+;;; ; same => 21,Goto(not-so-fast,s,1)
+;;; ; Y luego va así...
+;;; 
+;;; 
+;;; ; Hacer esperar 30 segundos a números desconocidos
+;;; [not-so-fast] 
+;;; exten => s,1,NoOp(Enter not-so-fast from ${CALLERID(num)})
+;;;  same => 2,GotoIf($[(${CALLERID(num)}) : (^999) ]?1000:3) ; Los teléfonos locales no esperan (cambiar 999 por vuestro prefijo provincial)
+;;;  same => 3,GotoIf($[(${CALLERID(num)}) : (^6)   ]?1000:4) ; Los móviles no esperan
+;;;  same => 4,GotoIf($[(${CALLERID(num)}) : (^7)   ]?1000:5) ; Los móviles no esperan
+;;;  same => 5,GotoIf($[(${CALLERID(num)}) : (^1)   ]?1000:6) ; Los números raros que empiezan por 1 (emergencias, operadores...) no esperan
+;;;  same => 6,GotoIf($[(${CALLERID(num)}) : (^00)  ]?8:7)    ; Los números internacionales esperan
+;;;  same => 7,GotoIf($[(${CALLERID(num)}) : (^0)   ]?1000:8) ; Pero no los números raros que empiezan por 0
+;;;  same => 8,Ringing()
+;;;  same => 9,Wait(10)                                       ; El resto espera 10 segundos...
+;;;  same => 10,Ringing()
+;;;  same => 11,Wait(10)                                      ; y 10 más... (eso es para mantener el trunk activo)
+;;;  same => 12,Ringing()
+;;;  same => 13,Wait(10)                                      ; y 10 más, será importante
+;;;  same => 14,Goto(1000)
+;;;  same => 1000,Goto(timetable,s,1)
+;;; 
+;;; [timetable]
+;;; exten => s,1,NoOp(Enter timetable from ${CALLERID(num)})
+;;;  same => n,GotoIfTime(22:00-23:59,mon-sun,*,*?2000) ; Nadie llama de 22h a 23:59h
+;;;  same => n,GotoIfTime(00:00-08:00,mon-fri,*,*?2000) ; Ni de 0h a 8h de lunes a viernes
+;;;  same => n,GotoIfTime(00:00-09:00,sat-sun,*,*?2000) ; Ni de 0h a 9h sábado y domingo
+;;;  same => n,Goto(inbound-route,s,1)
+;;;  same => 2000,Answer()
+;;;  same => 2001,Playtones(440/200,0/200)
+;;;  same => 2002,Wait(15)
+;;;  same => 2003,Hangup()
+;;; 
+;;; [inbound-route]
+;;; exten => s,1,NoOp(Entering inbound route with cid ${CALLERID(num)})
+;;;  same => n,GotoIf(${BLACKLIST()}?1000)              ; Has esperado, has llamado en hora y estás en lista negra, lol (asterisk -rx 'database put blacklist <número del pesado> <nombre del pesado>')
+;;;  same => n,Dial(PJSIP/201&PJSIP/202&PJSIP/203,60,r) ; Hacer sonar los teléfonos 60 segundos
+;;;  same => n,VoiceMail(999222345@default,s)           ; No hay nadie, mandar al contestador
+;;;  same => n,Hangup()
+;;;  same => 1000,MusicOnHold                           ; Destino de la lista negra, hacerles perder el tiempo
+;;; 

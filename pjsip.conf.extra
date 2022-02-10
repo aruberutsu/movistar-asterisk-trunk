@@ -1,0 +1,49 @@
+; Configuración de ejemplo para añadir tres extensiones (201, 202 y 203).
+; Cambiar callerid= por el nombre de cada una.
+; Cambiar la contraseña de cada extensión por una única y fuerte.
+
+[endpoint-basic](!)
+type=endpoint
+direct_media=no
+force_rport=yes
+context=default
+disallow=all
+allow=ulaw
+allow=alaw
+allow=g729
+
+[auth-userpass](!)
+type=auth
+auth_type=userpass
+
+[aor-single-reg](!)
+type=aor
+max_contacts=3
+
+[201](endpoint-basic)
+auth=auth201
+aors=201
+callerid="Sala de estar <201>"
+[auth201](auth-userpass)
+password=mEBMUp9JLHIZm3fjP4s9
+username=201
+[201](aor-single-reg)
+
+[202](endpoint-basic)
+auth=auth202
+aors=202
+callerid="Despacho <202>"
+[auth202](auth-userpass)
+password=xqlBqFf30XbOr3DB8Pvt
+username=202
+[202](aor-single-reg)
+
+[203](endpoint-basic)
+auth=auth203
+aors=203
+callerid="DECT <203>"
+[auth203](auth-userpass)
+password=AzxMf5MTEb7GUpvgWVM1
+username=203
+[203](aor-single-reg)
+
